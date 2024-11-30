@@ -1,5 +1,6 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
+const Joi = require("joi");
 const { createUser, getUser } = require("./database/user");
 
 const app = express();
@@ -11,6 +12,28 @@ app.use(express.json());
 // Route to create a new user
 app.post("/signup", async (req, res) => {
   const { username, password } = req.body;
+
+  const schema = Joi.object({
+    username: Joi.string().min(3).max(20).required(),
+    password: Joi.string()
+      .min(10)
+      .max(20)
+      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/)
+      .message(
+        "Password must include at least one uppercase letter, one lowercase letter, one number, and one special character"
+      )
+      .required(),
+  });
+
+  const validationResult = schema.validate({ username, password });
+
+  if (validationResult.error != null) {
+    const errorMessage = validationResult.error.message;
+    console.log(validationResult.error);
+    return res.status(400).send({
+      message: errorMessage,
+    });
+  }
 
   try {
     // Check if the username already exists
@@ -35,7 +58,7 @@ app.post("/signup", async (req, res) => {
 
 // Route to login a user
 app.post("/login", async (req, res) => {
-    console.log("Received request");
+  console.log("Received request");
   const { username, password } = req.body;
 
   try {
