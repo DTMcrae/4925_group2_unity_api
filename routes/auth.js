@@ -4,9 +4,30 @@ const { createUser, getUser } = require("../database/user");
 
 const router = express.Router();
 
-// Route to create a new user
 router.post("/signup", async (req, res) => {
   const { username, password } = req.body;
+
+  const schema = Joi.object({
+    username: Joi.string().min(3).max(20).required(),
+    password: Joi.string()
+      .min(10)
+      .max(20)
+      .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$/)
+      .message(
+        "Password must include at least one uppercase letter, one lowercase letter, one number, and one special character"
+      )
+      .required(),
+  });
+
+  const validationResult = schema.validate({ username, password });
+
+  if (validationResult.error != null) {
+    const errorMessage = validationResult.error.message;
+    console.log(validationResult.error);
+    return res.status(400).send({
+      message: errorMessage,
+    });
+  }
 
   try {
     // Check if the username already exists
