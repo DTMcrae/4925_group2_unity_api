@@ -29,4 +29,53 @@ async function getUser(username) {
   }
 }
 
-module.exports = { createUser, getUser };
+async function getAllProgress(userid)
+{
+  try {
+    const query = `
+    SELECT * FROM game_progress WHERE user_id = :userid
+    `;
+    const [rows] = await database.execute(query, {userid});
+    return rows;
+  } catch(error) {
+    //No progress found
+    return [];
+  }
+}
+
+async function saveOrUpdateProgress(userId, level, high_score, level_completed) {
+  try {
+    const query = `
+      INSERT INTO game_progress (user_id, level, high_score, level_completed)
+      VALUES (:userId, :level, :high_score, :level_completed)
+      ON DUPLICATE KEY UPDATE
+        high_score = GREATEST(high_score, :high_score),
+        level_completed = :level_completed
+    `;
+    await database.execute(query, { userId, level, high_score, level_completed });
+    return { success: true };
+  } catch (error) {
+    console.error("Error saving progress:", error.message);
+    throw error;
+  }
+}
+
+async function getHighScores(level) {
+  try {
+    const query = `
+      SELECT u.username, gp.high_score
+      FROM game_progress gp
+      JOIN user u ON gp.user_id = u.user_id
+      WHERE gp.level = :level
+      ORDER BY gp.high_score DESC
+    `;
+    const [rows] = await database.execute(query, { level });
+    return rows;
+  } catch (error) {
+    console.error("Error fetching high scores:", error.message);
+    throw error;
+  }
+}
+
+
+module.exports = { createUser, getUser, getAllProgress, getHighScores, saveOrUpdateProgress };
