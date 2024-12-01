@@ -22,7 +22,11 @@ router.post("/loadprogress", async (req, res) => {
 });
 
 router.post("/saveprogress", async (req, res) => {
-  const { userId, level, high_score, level_completed } = req.body;
+  const { userId, level, high_score, level_complete } = req.body;
+
+  console.log(JSON.stringify(req.body));
+
+  const level_completed = level_complete === "True" ? 1 : 0;
 
   try {
     await userDB.saveOrUpdateProgress(

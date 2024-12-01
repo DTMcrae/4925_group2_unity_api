@@ -45,14 +45,34 @@ async function getAllProgress(userid)
 
 async function saveOrUpdateProgress(userId, level, high_score, level_completed) {
   try {
-    const query = `
-      INSERT INTO game_progress (user_id, level, high_score, level_completed)
-      VALUES (:userId, :level, :high_score, :level_completed)
-      ON DUPLICATE KEY UPDATE
-        high_score = GREATEST(high_score, :high_score),
-        level_completed = :level_completed
+    // Check if a row with the given user_id and level exists
+    const checkQuery = `
+      SELECT COUNT(*) AS count
+      FROM game_progress
+      WHERE user_id = :userId AND level = :level
     `;
-    await database.execute(query, { userId, level, high_score, level_completed });
+    const [rows] = await database.execute(checkQuery, { userId, level });
+    const exists = rows[0].count > 0;
+
+    if (exists) {
+      // If the row exists, update it
+      const updateQuery = `
+        UPDATE game_progress
+        SET 
+          high_score = GREATEST(high_score, :high_score),
+          level_completed = :level_completed
+        WHERE user_id = :userId AND level = :level
+      `;
+      await database.execute(updateQuery, { userId, level, high_score, level_completed });
+    } else {
+      // If the row does not exist, insert a new one
+      const insertQuery = `
+        INSERT INTO game_progress (user_id, level, high_score, level_completed)
+        VALUES (:userId, :level, :high_score, :level_completed)
+      `;
+      await database.execute(insertQuery, { userId, level, high_score, level_completed });
+    }
+
     return { success: true };
   } catch (error) {
     console.error("Error saving progress:", error.message);
