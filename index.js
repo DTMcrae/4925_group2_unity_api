@@ -1,6 +1,5 @@
 const express = require("express");
-const bcrypt = require("bcrypt");
-const Joi = require("joi");
+var cors = require("cors");
 const authRoute = require("./routes/auth");
 const progressRoute = require("./routes/progress");
 
@@ -9,6 +8,10 @@ const port = 3030;
 
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
+
+app.use(
+  cors()
+);
 
 app.use("/auth", authRoute);
 app.use("/progress", progressRoute);
