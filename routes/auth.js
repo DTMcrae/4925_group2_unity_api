@@ -1,5 +1,6 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
+const Joi = require("joi");
 const { createUser, getUser } = require("../database/user");
 
 const router = express.Router();
